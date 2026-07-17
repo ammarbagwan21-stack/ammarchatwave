@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChatWave Dashboard</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background: #f3f4f6; color: #111827; }
+    .app { display: grid; grid-template-columns: 280px 1fr 320px; min-height: 100vh; }
+    .sidebar, .profile-panel { background: white; padding: 22px; border-right: 1px solid #e5e7eb; }
+    .profile-panel { border-right: none; border-left: 1px solid #e5e7eb; }
+    .logo { font-size: 26px; font-weight: bold; color: #4f46e5; margin-bottom: 25px; }
+    .menu button, .logout-btn { width: 100%; padding: 13px; margin-bottom: 10px; border: none; border-radius: 12px; background: #eef2ff; color: #312e81; font-weight: bold; cursor: pointer; text-align: left; }
+    .menu button.active { background: #4f46e5; color: white; }
+    .main { padding: 24px; }
+    .topbar { display: flex; gap: 10px; margin-bottom: 20px; }
+    .topbar input { flex: 1; padding: 14px; border: 1px solid #d1d5db; border-radius: 14px; outline: none; }
+    button { cursor: pointer; }
+    .primary-btn, .send-btn, .follow-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #4f46e5; color: white; font-weight: bold; }
+    .danger-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #ef4444; color: white; font-weight: bold; }
+    .gray-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #e5e7eb; color: #111827; font-weight: bold; }
+    .section { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+    .section h2 { margin-bottom: 15px; color: #312e81; }
+    .user-card, .chat-user, .request-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px; border: 1px solid #e5e7eb; border-radius: 14px; margin-bottom: 10px; }
+    .avatar { width: 42px; height: 42px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
+    .user-left { display: flex; align-items: center; }
+    .username { font-weight: bold; }
+    .small { color: #6b7280; font-size: 13px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .chat-box { height: 360px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 16px; padding: 15px; background: #f9fafb; margin-bottom: 12px; }
+    .message { max-width: 70%; padding: 11px 14px; border-radius: 16px; margin-bottom: 10px; font-size: 14px; }
+    .sent { background: #4f46e5; color: white; margin-left: auto; }
+    .received { background: white; border: 1px solid #e5e7eb; }
+    .message-input { display: flex; gap: 10px; }
+    .message-input input { flex: 1; padding: 14px; border: 1px solid #d1d5db; border-radius: 14px; outline: none; }
+    .profile-card { text-align: center; }
+    .big-avatar { width: 90px; height: 90px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: bold; margin: 0 auto 14px; }
+    .stats { display: flex; justify-content: space-around; margin-top: 18px; gap: 10px; }
+    .stats div { background: #eef2ff; padding: 14px; border-radius: 14px; width: 50%; }
+    .hidden { display: none; }
+    @media(max-width: 950px) { .app { grid-template-columns: 1fr; } .sidebar, .profile-panel { border: none; } }
+  
+    .call-bar { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .call-btn { padding: 10px 14px; border: none; border-radius: 12px; background: #10b981; color: white; font-weight: bold; }
+    .voice-btn { background: #0ea5e9; }
+    .end-call-btn { background: #ef4444; }
+    .video-area { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .video-area video { width: 100%; height: 180px; background: #111827; border-radius: 16px; object-fit: cover; }
+    .incoming-call { position: fixed; top: 20px; right: 20px; background: white; padding: 18px; border-radius: 18px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); z-index: 999; display: none; }
+    .incoming-call h3 { color: #312e81; margin-bottom: 8px; }
+
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .tool-btn { padding: 10px 12px; border: none; border-radius: 12px; background: #eef2ff; color: #312e81; font-weight: bold; }
+    .media-preview { max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; }
+    .doc-link, .map-link { color: inherit; font-weight: bold; text-decoration: underline; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+    .gallery-item { border: 1px solid #e5e7eb; border-radius: 14px; padding: 8px; background: #f9fafb; }
+    .gallery-item img, .gallery-item video { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; background: #111827; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-card { background: white; width: min(480px, 100%); border-radius: 20px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+    .modal-card h3 { color: #312e81; margin-bottom: 12px; }
+    .modal-card input, .modal-card textarea { width: 100%; padding: 13px; border: 1px solid #d1d5db; border-radius: 12px; margin-bottom: 10px; outline: none; }
+    .ai-box { border: 1px solid #e5e7eb; border-radius: 16px; padding: 12px; background: #f9fafb; min-height: 120px; margin-bottom: 10px; }
+    .live-badge { display:inline-block; padding: 4px 8px; background:#dcfce7; color:#166534; border-radius:999px; font-size:12px; font-weight:bold; margin-top:6px; }
+
+    .attach-wrap { position: relative; display: flex; align-items: center; }
+    .attach-btn { width: 48px; height: 48px; border: none; border-radius: 50%; background: #4f46e5; color: white; font-size: 26px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+    .attach-menu { position: absolute; bottom: 58px; left: 0; width: 270px; background: white; border: 1px solid #e5e7eb; border-radius: 18px; padding: 12px; box-shadow: 0 18px 45px rgba(0,0,0,.18); display: none; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 50; }
+    .attach-menu.show { display: grid; }
+    .attach-option { border: none; border-radius: 14px; padding: 12px 10px; background: #eef2ff; color: #312e81; font-weight: bold; text-align: left; }
+    .attach-option span { display:block; font-size: 20px; margin-bottom: 4px; }
+    .poll-option { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; background:rgba(255,255,255,.18); border-radius:12px; margin-top:7px; border:1px solid rgba(255,255,255,.22); }
+    .received .poll-option { background:#f3f4f6; border-color:#e5e7eb; }
+    .poll-vote-btn { border:none; border-radius:10px; padding:6px 10px; background:#10b981; color:white; font-weight:bold; }
+    .contact-card { display:flex; align-items:center; gap:10px; }
+    .contact-icon { width:38px; height:38px; border-radius:50%; background:#10b981; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; }
+
+    .camera-btn { width: 48px; height: 48px; border: none; border-radius: 50%; background: #10b981; color: white; font-size: 20px; font-weight: bold; display:flex; align-items:center; justify-content:center; }
+    .profile-details { margin-top: 16px; text-align: left; background:#f9fafb; border:1px solid #e5e7eb; border-radius:16px; padding:12px; }
+    .profile-details p { margin: 7px 0; font-size: 14px; }
+    .profile-edit-btn { margin-top: 14px; width:100%; }
+
+</style>
+</head>
+<body>
+  <div class="incoming-call" id="incomingCallBox">
+    <h3 id="incomingCallTitle">Incoming Call</h3>
+    <p class="small" id="incomingCallText"></p>
+    <div class="actions" style="margin-top:12px;">
+      <button class="primary-btn" onclick="acceptCall()">Accept</button>
+      <button class="danger-btn" onclick="rejectCall()">Reject</button>
+    </div>
+  </div>
+
+
+  <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden" onchange="sendMediaFile(event)">
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="sendCameraPhoto(event)">
+  <input type="file" id="documentInput" accept=".pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx" class="hidden" onchange="sendDocumentFile(event)">
+
+  <div class="modal" id="eventModal">
+    <div class="modal-card">
+      <h3>Create Event</h3>
+      <input type="text" id="eventTitle" placeholder="Event title">
+      <input type="datetime-local" id="eventDateTime">
+      <textarea id="eventNote" placeholder="Event note"></textarea>
+      <div class="actions">
+        <button class="primary-btn" onclick="sendEventMessage()">Send Event</button>
+        <button class="gray-btn" onclick="closeEventModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal" id="pollModal">
+    <div class="modal-card">
+      <h3>Create Poll</h3>
+      <input type="text" id="pollQuestion" placeholder="Poll question">
+      <input type="text" id="pollOption1" placeholder="Option 1">
+      <input type="text" id="pollOption2" placeholder="Option 2">
+      <input type="text" id="pollOption3" placeholder="Option 3 optional">
+      <input type="text" id="pollOption4" placeholder="Option 4 optional">
+      <div class="actions">
+        <button class="primary-btn" onclick="sendPollMessage()">Send Poll</button>
+        <button class="gray-btn" onclick="closePollModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="contactModal">
+    <div class="modal-card">
+      <h3>Share Contact</h3>
+      <input type="text" id="contactName" placeholder="Contact name">
+      <input type="tel" id="contactPhone" placeholder="Mobile number">
+      <input type="email" id="contactEmail" placeholder="Email optional">
+      <div class="actions">
+        <button class="primary-btn" onclick="sendContactMessage()">Send Contact</button>
+        <button class="gray-btn" onclick="closeContactModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="profileEditModal">
+    <div class="modal-card">
+      <h3>Edit Profile Details</h3>
+      <input type="text" id="editFullName" placeholder="Full name">
+      <input type="text" id="editBio" placeholder="Bio">
+      <input type="text" id="editPhone" placeholder="Phone number">
+      <input type="text" id="editAddress" placeholder="Address">
+      <input type="text" id="editCity" placeholder="City">
+      <input type="text" id="editState" placeholder="State">
+      <input type="text" id="editCountry" placeholder="Country">
+      <input type="text" id="editPincode" placeholder="Pincode">
+      <input type="date" id="editDob" placeholder="Date of birth">
+      <input type="text" id="editGender" placeholder="Gender">
+      <div class="actions">
+        <button class="primary-btn" onclick="saveProfileDetails()">Save Profile</button>
+        <button class="gray-btn" onclick="closeProfileEdit()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">ChatWave</div>
+      <div class="menu">
+        <button class="active" onclick="showSection('searchSection', this)">Search Users</button>
+        <button onclick="showSection('allUsersSection', this); loadAllUsers();">All Users</button>
+        <button onclick="showSection('requestsSection', this); loadRequests();">Requests</button>
+        <button onclick="showSection('followingSection', this); loadFollowingList();">Following</button>
+        <button onclick="showSection('chatSection', this); loadFollowingChats();">Chats</button>
+        <button onclick="showSection('profileSectionMobile', this)">Profile</button>
+      </div>
+      <button class="logout-btn" onclick="logoutUser()">Logout</button>
+    </aside>
+
+    <main class="main">
+      <section id="searchSection" class="section">
+        <h2>Search People</h2>
+        <div class="topbar">
+          <input type="text" id="searchInput" placeholder="Search username like ammar21" />
+          <button class="primary-btn" onclick="searchUser()">Search</button>
+        </div>
+        <div id="searchResults"></div>
+      </section>
+
+      <section id="allUsersSection" class="section hidden">
+        <h2>All Users</h2>
+        <div id="allUsersBox"></div>
+      </section>
+
+      <section id="requestsSection" class="section hidden">
+        <h2>Follow Requests</h2>
+        <div id="requestsBox"></div>
+      </section>
+
+      <section id="followingSection" class="section hidden">
+        <h2>My Following</h2>
+        <div id="followingBox"></div>
+      </section>
+
+      <section id="chatSection" class="section hidden">
+        <h2>Chats</h2>
+        <div id="chatUsers"></div>
+        <div class="call-bar">
+          <button class="call-btn voice-btn" onclick="startCall('voice')">Voice Call</button>
+          <button class="call-btn" onclick="startCall('video')">Video Call</button>
+          <button class="call-btn end-call-btn" onclick="endCall()">End Call</button>
+        </div>
+        <div class="video-area" id="videoArea">
+          <video id="localVideo" autoplay muted playsinline></video>
+          <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+        <div class="chat-box" id="chatBox"><p class="small">Select a following user to start chat.</p></div>
+
+        <div class="message-input">
+          <div class="attach-wrap">
+            <button class="attach-btn" onclick="toggleAttachMenu()" title="More options">+</button>
+            <div class="attach-menu" id="attachMenu">
+              <button class="attach-option" onclick="openFromAttach('media')"><span>📷</span>Image / Video</button>
+              <button class="attach-option" onclick="openFromAttach('document')"><span>📄</span>Document</button>
+              <button class="attach-option" onclick="openFromAttach('location')"><span>📍</span>Location</button>
+              <button class="attach-option" onclick="openFromAttach('liveLocation')"><span>🟢</span>Live Location</button>
+              <button class="attach-option" onclick="openFromAttach('event')"><span>📅</span>Event</button>
+              <button class="attach-option" onclick="openFromAttach('poll')"><span>📊</span>Poll</button>
+              <button class="attach-option" onclick="openFromAttach('contact')"><span>👤</span>Contact</button>
+            </div>
+          </div>
+          <input type="text" id="messageInput" placeholder="Type message..." />
+          <button class="camera-btn" onclick="openCamera()" title="Camera">📷</button>
+          <button class="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+      </section>
+
+
+      
+
+      
+
+      <section id="profileSectionMobile" class="section hidden">
+        <h2>My Profile</h2>
+        <div id="mobileProfileBox"></div>
+      </section>
+    </main>
+
+    <aside class="profile-panel">
+      <div class="profile-card" id="profileBox">
+        <div class="big-avatar">?</div>
+        <h2>Loading...</h2>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, get, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXmAbn5R3Ndau0XWcecVFw1HH2MIAp8KE",
+      authDomain: "whatshapp-2fb44.firebaseapp.com",
+      databaseURL: "https://whatshapp-2fb44-default-rtdb.firebaseio.com",
+      projectId: "whatshapp-2fb44",
+      storageBucket: "whatshapp-2fb44.firebasestorage.app",
+      messagingSenderId: "670669863082",
+      appId: "1:670669863082:web:e186e5125a306b81ff78d3",
+      measurementId: "G-WGFE5LJSZM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+    const storage = getStorage(app);
+
+    let currentUser = null;
+    let currentUserData = null;
+    let selectedChatUser = null;
+    let selectedCallUser = null;
+    let peerConnection = null;
+    let localStream = null;
+    let remoteStream = null;
+    let activeCallId = null;
+    let incomingCallData = null;
+    let liveLocationWatchId = null;
+
+    const servers = {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" }
+      ]
+    };
+
+    function cleanUsername(username) {
+      return username.toLowerCase().trim().replace(/[^a-z0-9_]/g, "");
+    }
+
+    function getChatId(uid1, uid2) {
+      return uid1 < uid2 ? uid1 + "_" + uid2 : uid2 + "_" + uid1;
+    }
+
+    window.showSection = function(sectionId, button) {
+      document.querySelectorAll(".section").forEach(s => s.classList.add("hidden"));
+      document.getElementById(sectionId).classList.remove("hidden");
+      document.querySelectorAll(".menu button").forEach(b => b.classList.remove("active"));
+      button.classList.add("active");
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+      currentUser = user;
+      const snapshot = await get(ref(database, "users/" + user.uid));
+      currentUserData = snapshot.val();
+      loadProfile();
+      loadRequests();
+      loadFollowingChats();
+      listenForIncomingCalls();
+    });
+
+    async function refreshCurrentUser() {
+      const snapshot = await get(ref(database, "users/" + currentUser.uid));
+      currentUserData = snapshot.val();
+      loadProfile();
+    }
+
+    function loadProfile() {
+      const firstLetter = (currentUserData.username || "?").charAt(0).toUpperCase();
+      const html = `
+        <div class="big-avatar">${firstLetter}</div>
+        <h2>${escapeHtml(currentUserData.fullName || "ChatWave User")}</h2>
+        <p class="small">@${escapeHtml(currentUserData.username || "")}</p>
+        <p style="margin-top:12px;">${escapeHtml(currentUserData.bio || "Hey there! I am using ChatWave.")}</p>
+
+        <div class="stats">
+          <div><h3>${currentUserData.followersCount || 0}</h3><p class="small">Followers</p></div>
+          <div><h3>${currentUserData.followingCount || 0}</h3><p class="small">Following</p></div>
+        </div>
+
+        <div class="profile-details">
+          <p><b>Phone:</b> ${escapeHtml(currentUserData.phone || "Not added")}</p>
+          <p><b>Address:</b> ${escapeHtml(currentUserData.address || "Not added")}</p>
+          <p><b>City:</b> ${escapeHtml(currentUserData.city || "Not added")}</p>
+          <p><b>State:</b> ${escapeHtml(currentUserData.state || "Not added")}</p>
+          <p><b>Country:</b> ${escapeHtml(currentUserData.country || "Not added")}</p>
+          <p><b>Pincode:</b> ${escapeHtml(currentUserData.pincode || "Not added")}</p>
+          <p><b>DOB:</b> ${escapeHtml(currentUserData.dob || "Not added")}</p>
+          <p><b>Gender:</b> ${escapeHtml(currentUserData.gender || "Not added")}</p>
+        </div>
+
+        <button class="primary-btn profile-edit-btn" onclick="openProfileEdit()">Edit Profile</button>
+      `;
+      document.getElementById("profileBox").innerHTML = html;
+      document.getElementById("mobileProfileBox").innerHTML = html;
+    }
+
+    async function getRelationStatus(targetUid) {
+      const followingSnap = await get(ref(database, "following/" + currentUser.uid + "/" + targetUid));
+      if (followingSnap.exists()) return "following";
+
+      const requestSnap = await get(ref(database, "followRequests/" + targetUid + "/" + currentUser.uid));
+      if (requestSnap.exists()) return "requested";
+
+      return "none";
+    }
+
+    async function renderUserCard(user, box, showUnfollow = false) {
+      const status = await getRelationStatus(user.uid);
+      let buttonHtml = "";
+
+      if (showUnfollow || status === "following") {
+        buttonHtml = `<button class="primary-btn" onclick="prepareCall('${user.uid}', '${user.username}', '${user.fullName}', 'voice')">Voice Call</button><button class="primary-btn" onclick="prepareCall('${user.uid}', '${user.username}', '${user.fullName}', 'video')">Video Call</button><button class="danger-btn" onclick="unfollowUser('${user.uid}')">Unfollow</button>`;
+      } else if (status === "requested") {
+        buttonHtml = `<button class="gray-btn">Requested</button>`;
+      } else {
+        buttonHtml = `<button class="follow-btn" onclick="sendFollowRequest('${user.uid}')">Follow</button>`;
+      }
+
+      box.innerHTML += `
+        <div class="user-card">
+          <div class="user-left">
+            <div class="avatar">${user.username.charAt(0).toUpperCase()}</div>
+            <div>
+              <div class="username">${user.fullName}</div>
+              <div class="small">@${user.username}</div>
+            </div>
+          </div>
+          <div class="actions">${buttonHtml}</div>
+        </div>
+      `;
+    }
+
+    window.searchUser = async function() {
+      const username = cleanUsername(document.getElementById("searchInput").value);
+      const resultBox = document.getElementById("searchResults");
+      resultBox.innerHTML = "";
+
+      if (!username) {
+        resultBox.innerHTML = `<p class="small">Please enter username.</p>`;
+        return;
+      }
+
+      const usernameSnap = await get(ref(database, "usernames/" + username));
+      if (!usernameSnap.exists()) {
+        resultBox.innerHTML = `<p class="small">No user found.</p>`;
+        return;
+      }
+
+      const foundUid = usernameSnap.val().uid;
+      if (foundUid === currentUser.uid) {
+        resultBox.innerHTML = `<p class="small">This is your own account.</p>`;
+        return;
+      }
+
+      const userSnap = await get(ref(database, "users/" + foundUid));
+      await renderUserCard(userSnap.val(), resultBox);
+    };
+
+    window.loadAllUsers = async function() {
+      const box = document.getElementById("allUsersBox");
+      box.innerHTML = "";
+      const usersSnap = await get(ref(database, "users"));
+
+      if (!usersSnap.exists()) {
+        box.innerHTML = `<p class="small">No users found.</p>`;
+        return;
+      }
+
+      const users = usersSnap.val();
+      for (const uid in users) {
+        if (uid !== currentUser.uid) {
+          await renderUserCard(users[uid], box);
+        }
+      }
+
+      if (box.innerHTML === "") box.innerHTML = `<p class="small">No other users found.</p>`;
+    };
+
+    window.sendFollowRequest = async function(targetUid) {
+      const alreadyFollowing = await get(ref(database, "following/" + currentUser.uid + "/" + targetUid));
+      if (alreadyFollowing.exists()) {
+        alert("You already follow this user.");
+        return;
+      }
+
+      const requestRef = ref(database, "followRequests/" + targetUid + "/" + currentUser.uid);
+      const requestSnap = await get(requestRef);
+      if (requestSnap.exists()) {
+        alert("Request already sent.");
+        return;
+      }
+
+      await set(requestRef, {
+        fromUid: currentUser.uid,
+        username: currentUserData.username,
+        fullName: currentUserData.fullName,
+        createdAt: new Date().toISOString()
+      });
+
+      alert("Follow request sent!");
+      searchUser();
+      loadAllUsers();
+    };
+
+    window.loadRequests = async function() {
+      const box = document.getElementById("requestsBox");
+      if (!box) return;
+      box.innerHTML = "";
+
+      const snap = await get(ref(database, "followRequests/" + currentUser.uid));
+      if (!snap.exists()) {
+        box.innerHTML = `<p class="small">No follow requests.</p>`;
+        return;
+      }
+
+      const requests = snap.val();
+      for (const fromUid in requests) {
+        const req = requests[fromUid];
+        box.innerHTML += `
+          <div class="request-card">
+            <div class="user-left">
+              <div class="avatar">${req.username.charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="username">${req.fullName}</div>
+                <div class="small">@${req.username} wants to follow you</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary-btn" onclick="approveRequest('${fromUid}')">Approve</button>
+              <button class="danger-btn" onclick="rejectRequest('${fromUid}')">Reject</button>
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    window.approveRequest = async function(fromUid) {
+      await set(ref(database, "following/" + fromUid + "/" + currentUser.uid), true);
+      await set(ref(database, "followers/" + currentUser.uid + "/" + fromUid), true);
+      await remove(ref(database, "followRequests/" + currentUser.uid + "/" + fromUid));
+
+      const fromUserSnap = await get(ref(database, "users/" + fromUid));
+      const fromUser = fromUserSnap.val();
+      await update(ref(database, "users/" + fromUid), {
+        followingCount: (fromUser.followingCount || 0) + 1
+      });
+
+      await update(ref(database, "users/" + currentUser.uid), {
+        followersCount: (currentUserData.followersCount || 0) + 1
+      });
+
+      alert("Request approved.");
+      await refreshCurrentUser();
+      loadRequests();
+    };
+
+    window.rejectRequest = async function(fromUid) {
+      await remove(ref(database, "followRequests/" + currentUser.uid + "/" + fromUid));
+      alert("Request rejected.");
+      loadRequests();
+    };
+
+    window.unfollowUser = async function(targetUid) {
+      await remove(ref(database, "following/" + currentUser.uid + "/" + targetUid));
+      await remove(ref(database, "followers/" + targetUid + "/" + currentUser.uid));
+
+      await update(ref(database, "users/" + currentUser.uid), {
+        followingCount: Math.max((currentUserData.followingCount || 0) - 1, 0)
+      });
+
+      const targetSnap = await get(ref(database, "users/" + targetUid));
+      const targetData = targetSnap.val();
+      await update(ref(database, "users/" + targetUid), {
+        followersCount: Math.max((targetData.followersCount || 0) - 1, 0)
+      });
+
+      alert("Unfollowed.");
+      await refreshCurrentUser();
+      loadFollowingList();
+      loadFollowingChats();
+      loadAllUsers();
+      searchUser();
+    };
+
+    window.loadFollowingList = async function() {
+      const box = document.getElementById("followingBox");
+      box.innerHTML = "";
+      const followingSnap = await get(ref(database, "following/" + currentUser.uid));
+
+      if (!followingSnap.exists()) {
+        box.innerHTML = `<p class="small">You are not following anyone.</p>`;
+        return;
+      }
+
+      const following = followingSnap.val();
+      for (const uid in following) {
+        const userSnap = await get(ref(database, "users/" + uid));
+        await renderUserCard(userSnap.val(), box, true);
+      }
+    };
+
+    window.loadFollowingChats = async function() {
+      const chatUsersBox = document.getElementById("chatUsers");
+      chatUsersBox.innerHTML = "";
+      const followingSnap = await get(ref(database, "following/" + currentUser.uid));
+
+      if (!followingSnap.exists()) {
+        chatUsersBox.innerHTML = `<p class="small">Follow users to start chatting.</p>`;
+        return;
+      }
+
+      const following = followingSnap.val();
+      for (const uid in following) {
+        const userSnap = await get(ref(database, "users/" + uid));
+        const user = userSnap.val();
+        chatUsersBox.innerHTML += `
+          <div class="chat-user">
+            <div class="user-left" onclick="openChat('${uid}', '${user.username}', '${user.fullName}')">
+              <div class="avatar">${user.username.charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="username">${user.fullName}</div>
+                <div class="small">@${user.username}</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary-btn" onclick="prepareCall('${uid}', '${user.username}', '${user.fullName}', 'voice')">Voice</button>
+              <button class="primary-btn" onclick="prepareCall('${uid}', '${user.username}', '${user.fullName}', 'video')">Video</button>
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    window.openChat = function(uid, username, fullName) {
+      selectedChatUser = { uid, username, fullName };
+      const chatId = getChatId(currentUser.uid, uid);
+      const chatBox = document.getElementById("chatBox");
+
+      onValue(ref(database, "messages/" + chatId), (snapshot) => {
+        chatBox.innerHTML = `<p class="small">Chat with @${username}</p>`;
+        if (snapshot.exists()) {
+          snapshot.forEach(child => {
+            const msg = child.val();
+            msg.messageId = child.key;
+            msg.chatId = chatId;
+            const className = msg.senderId === currentUser.uid ? "sent" : "received";
+            chatBox.innerHTML += renderMessage(msg, className);
+          });
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
+    };
+
+    async function createPeerConnection(callId) {
+      peerConnection = new RTCPeerConnection(servers);
+      remoteStream = new MediaStream();
+
+      document.getElementById("remoteVideo").srcObject = remoteStream;
+
+      localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+      });
+
+      peerConnection.ontrack = event => {
+        event.streams[0].getTracks().forEach(track => {
+          remoteStream.addTrack(track);
+        });
+      };
+
+      peerConnection.onicecandidate = async event => {
+        if (event.candidate) {
+          await push(ref(database, "calls/" + callId + "/candidates"), {
+            candidate: event.candidate.toJSON(),
+            from: currentUser.uid
+          });
+        }
+      };
+    }
+
+    function showVideoArea(show) {
+      document.getElementById("videoArea").style.display = show ? "grid" : "none";
+    }
+
+    window.prepareCall = function(uid, username, fullName, type) {
+      selectedCallUser = { uid, username, fullName };
+      startCall(type);
+    };
+
+    window.startCall = async function(type) {
+      const callUser = selectedCallUser || selectedChatUser;
+      if (!callUser) {
+        alert("Please select a user first.");
+        return;
+      }
+
+      try {
+        activeCallId = getChatId(currentUser.uid, callUser.uid) + "_" + Date.now();
+        const isVideo = type === "video";
+
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: isVideo,
+          audio: true
+        });
+
+        document.getElementById("localVideo").srcObject = localStream;
+        showVideoArea(true);
+
+        await createPeerConnection(activeCallId);
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        await set(ref(database, "calls/" + activeCallId), {
+          callId: activeCallId,
+          fromUid: currentUser.uid,
+          fromUsername: currentUserData.username,
+          toUid: callUser.uid,
+          type: type,
+          status: "ringing",
+          offer: offer,
+          createdAt: new Date().toISOString()
+        });
+
+        listenCallAnswer(activeCallId);
+        listenIceCandidates(activeCallId);
+        alert(type === "video" ? "Video call started." : "Voice call started.");
+      } catch (error) {
+        alert("Call error: " + error.message);
+      }
+    };
+
+    function listenCallAnswer(callId) {
+      onValue(ref(database, "calls/" + callId), async snapshot => {
+        if (!snapshot.exists()) return;
+        const call = snapshot.val();
+
+        if (call.status === "accepted" && call.answer && peerConnection && !peerConnection.currentRemoteDescription) {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(call.answer));
+        }
+
+        if (call.status === "rejected" || call.status === "ended") {
+          closeCall();
+        }
+      });
+    }
+
+    function listenIceCandidates(callId) {
+      onValue(ref(database, "calls/" + callId + "/candidates"), snapshot => {
+        if (!snapshot.exists() || !peerConnection) return;
+        snapshot.forEach(child => {
+          const data = child.val();
+          if (data.from !== currentUser.uid && data.candidate) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(() => {});
+          }
+        });
+      });
+    }
+
+    function listenForIncomingCalls() {
+      onValue(ref(database, "calls"), snapshot => {
+        if (!snapshot.exists()) return;
+
+        snapshot.forEach(child => {
+          const call = child.val();
+          if (call.toUid === currentUser.uid && call.status === "ringing") {
+            incomingCallData = call;
+            activeCallId = call.callId;
+            document.getElementById("incomingCallTitle").innerText = call.type === "video" ? "Incoming Video Call" : "Incoming Voice Call";
+            document.getElementById("incomingCallText").innerText = "@" + call.fromUsername + " is calling you";
+            document.getElementById("incomingCallBox").style.display = "block";
+          }
+        });
+      });
+    }
+
+    window.acceptCall = async function() {
+      if (!incomingCallData) return;
+
+      try {
+        const isVideo = incomingCallData.type === "video";
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: isVideo,
+          audio: true
+        });
+
+        document.getElementById("localVideo").srcObject = localStream;
+        showVideoArea(true);
+        document.getElementById("incomingCallBox").style.display = "none";
+
+        await createPeerConnection(incomingCallData.callId);
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingCallData.offer));
+
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        await update(ref(database, "calls/" + incomingCallData.callId), {
+          status: "accepted",
+          answer: answer
+        });
+
+        listenIceCandidates(incomingCallData.callId);
+      } catch (error) {
+        alert("Accept call error: " + error.message);
+      }
+    };
+
+    window.rejectCall = async function() {
+      if (!incomingCallData) return;
+      await update(ref(database, "calls/" + incomingCallData.callId), { status: "rejected" });
+      document.getElementById("incomingCallBox").style.display = "none";
+      incomingCallData = null;
+    };
+
+    window.endCall = async function() {
+      if (activeCallId) {
+        await update(ref(database, "calls/" + activeCallId), { status: "ended" });
+      }
+      closeCall();
+    };
+
+    function closeCall() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+      if (peerConnection) {
+        peerConnection.close();
+      }
+      localStream = null;
+      remoteStream = null;
+      peerConnection = null;
+      activeCallId = null;
+      incomingCallData = null;
+      document.getElementById("localVideo").srcObject = null;
+      document.getElementById("remoteVideo").srcObject = null;
+      document.getElementById("incomingCallBox").style.display = "none";
+      showVideoArea(false);
+    }
+
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[char]));
+    }
+
+    function renderMessage(msg, className) {
+      const safeText = escapeHtml(msg.text || "");
+      if (msg.type === "image") {
+        return `<div class="message ${className}"><div>${safeText}</div><img class="media-preview" src="${msg.fileUrl}" alt="image"></div>`;
+      }
+      if (msg.type === "video") {
+        return `<div class="message ${className}"><div>${safeText}</div><video class="media-preview" controls src="${msg.fileUrl}"></video></div>`;
+      }
+      if (msg.type === "document") {
+        return `<div class="message ${className}">📄 <a class="doc-link" href="${msg.fileUrl}" target="_blank">${escapeHtml(msg.fileName || "Open document")}</a></div>`;
+      }
+      if (msg.type === "location" || msg.type === "liveLocation") {
+        const url = `https://www.google.com/maps?q=${msg.latitude},${msg.longitude}`;
+        const badge = msg.type === "liveLocation" ? `<div class="live-badge">LIVE LOCATION</div>` : "";
+        return `<div class="message ${className}">📍 <a class="map-link" href="${url}" target="_blank">${safeText || "Open location"}</a>${badge}</div>`;
+      }
+      if (msg.type === "event") {
+        return `<div class="message ${className}">📅 <b>${escapeHtml(msg.title)}</b><br>${escapeHtml(msg.dateTime)}<br><span>${escapeHtml(msg.note)}</span></div>`;
+      }
+
+      if (msg.type === "poll") {
+        let optionsHtml = "";
+        const options = msg.options || [];
+        const votes = msg.votes || {};
+        options.forEach((option, index) => {
+          const count = Object.values(votes).filter(v => Number(v) === index).length;
+          optionsHtml += `<div class="poll-option"><span>${escapeHtml(option)} (${count})</span><button class="poll-vote-btn" onclick="votePoll('${msg.chatId}', '${msg.messageId}', ${index})">Vote</button></div>`;
+        });
+        return `<div class="message ${className}">📊 <b>${escapeHtml(msg.question)}</b>${optionsHtml}</div>`;
+      }
+      if (msg.type === "contact") {
+        const phoneLink = msg.phone ? `<br><a class="doc-link" href="tel:${escapeHtml(msg.phone)}">${escapeHtml(msg.phone)}</a>` : "";
+        const emailLine = msg.email ? `<br><a class="doc-link" href="mailto:${escapeHtml(msg.email)}">${escapeHtml(msg.email)}</a>` : "";
+        return `<div class="message ${className}"><div class="contact-card"><div class="contact-icon">👤</div><div><b>${escapeHtml(msg.name)}</b>${phoneLink}${emailLine}</div></div></div>`;
+      }
+
+      return `<div class="message ${className}">${safeText}</div>`;
+    }
+
+    async function sendChatPayload(payload) {
+      if (!selectedChatUser) {
+        alert("Select a user first.");
+        return false;
+      }
+      const chatId = getChatId(currentUser.uid, selectedChatUser.uid);
+      await push(ref(database, "messages/" + chatId), {
+        senderId: currentUser.uid,
+        receiverId: selectedChatUser.uid,
+        createdAt: new Date().toISOString(),
+        ...payload
+      });
+      return true;
+    }
+
+    async function uploadChatFile(file, folder) {
+      const safeName = Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const fileRef = storageRef(storage, `chatFiles/${currentUser.uid}/${folder}/${safeName}`);
+      await uploadBytes(fileRef, file);
+      return await getDownloadURL(fileRef);
+    }
+
+    window.sendMediaFile = async function(event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      if (!selectedChatUser) return alert("Select a user first.");
+
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+      if (!isImage && !isVideo) return alert("Please select image or video.");
+
+      try {
+        const fileUrl = await uploadChatFile(file, isImage ? "images" : "videos");
+        await sendChatPayload({
+          type: isImage ? "image" : "video",
+          text: isImage ? "Image" : "Video",
+          fileUrl,
+          fileName: file.name
+        });
+      } catch (error) {
+        alert("Upload error: " + error.message);
+      }
+    };
+
+    window.openCamera = function() {
+      if (!selectedChatUser) {
+        alert("Select a user first.");
+        return;
+      }
+      document.getElementById("cameraInput").click();
+    };
+
+    window.sendCameraPhoto = async function(event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      if (!selectedChatUser) return alert("Select a user first.");
+
+      try {
+        const fileUrl = await uploadChatFile(file, "camera");
+        await sendChatPayload({
+          type: "image",
+          text: "Camera Photo",
+          fileUrl,
+          fileName: file.name || "camera-photo.jpg"
+        });
+      } catch (error) {
+        alert("Camera upload error: " + error.message);
+      }
+    };
+
+    window.sendDocumentFile = async function(event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      if (!selectedChatUser) return alert("Select a user first.");
+
+      try {
+        const fileUrl = await uploadChatFile(file, "documents");
+        await sendChatPayload({
+          type: "document",
+          text: "Document",
+          fileUrl,
+          fileName: file.name
+        });
+      } catch (error) {
+        alert("Document upload error: " + error.message);
+      }
+    };
+
+    window.shareLocation = function() {
+      if (!selectedChatUser) return alert("Select a user first.");
+      if (!navigator.geolocation) return alert("Location not supported in this browser.");
+
+      navigator.geolocation.getCurrentPosition(async position => {
+        await sendChatPayload({
+          type: "location",
+          text: "My Location",
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+      }, error => alert("Location error: " + error.message));
+    };
+
+    window.startLiveLocation = function() {
+      if (!selectedChatUser) return alert("Select a user first.");
+      if (!navigator.geolocation) return alert("Location not supported in this browser.");
+
+      alert("Live location started. It will update when your position changes.");
+      if (liveLocationWatchId) navigator.geolocation.clearWatch(liveLocationWatchId);
+
+      liveLocationWatchId = navigator.geolocation.watchPosition(async position => {
+        await sendChatPayload({
+          type: "liveLocation",
+          text: "My Live Location",
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+      }, error => alert("Live location error: " + error.message), {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 20000
+      });
+    };
+
+    window.openEventModal = function() {
+      if (!selectedChatUser) return alert("Select a user first.");
+      document.getElementById("eventModal").style.display = "flex";
+    };
+
+    window.closeEventModal = function() {
+      document.getElementById("eventModal").style.display = "none";
+    };
+
+    window.sendEventMessage = async function() {
+      const title = document.getElementById("eventTitle").value.trim();
+      const dateTime = document.getElementById("eventDateTime").value;
+      const note = document.getElementById("eventNote").value.trim();
+
+      if (!title || !dateTime) return alert("Enter event title and date/time.");
+
+      await sendChatPayload({
+        type: "event",
+        title,
+        dateTime,
+        note,
+        text: title
+      });
+
+      document.getElementById("eventTitle").value = "";
+      document.getElementById("eventDateTime").value = "";
+      document.getElementById("eventNote").value = "";
+      closeEventModal();
+    };
+
+    
+
+    
+
+
+    window.toggleAttachMenu = function() {
+      const menu = document.getElementById("attachMenu");
+      menu.classList.toggle("show");
+    };
+
+    window.openFromAttach = function(type) {
+      document.getElementById("attachMenu").classList.remove("show");
+
+      if (!selectedChatUser) {
+        alert("Select a user first.");
+        return;
+      }
+
+      if (type === "media") {
+        document.getElementById("mediaInput").click();
+      } else if (type === "document") {
+        document.getElementById("documentInput").click();
+      } else if (type === "location") {
+        shareLocation();
+      } else if (type === "liveLocation") {
+        startLiveLocation();
+      } else if (type === "event") {
+        openEventModal();
+      } else if (type === "poll") {
+        openPollModal();
+      } else if (type === "contact") {
+        openContactModal();
+      }
+    };
+
+    document.addEventListener("click", function(event) {
+      const wrap = document.querySelector(".attach-wrap");
+      const menu = document.getElementById("attachMenu");
+      if (wrap && menu && !wrap.contains(event.target)) {
+        menu.classList.remove("show");
+      }
+    });
+
+    window.openPollModal = function() {
+      if (!selectedChatUser) return alert("Select a user first.");
+      document.getElementById("pollModal").style.display = "flex";
+    };
+
+    window.closePollModal = function() {
+      document.getElementById("pollModal").style.display = "none";
+    };
+
+    window.sendPollMessage = async function() {
+      const question = document.getElementById("pollQuestion").value.trim();
+      const options = [
+        document.getElementById("pollOption1").value.trim(),
+        document.getElementById("pollOption2").value.trim(),
+        document.getElementById("pollOption3").value.trim(),
+        document.getElementById("pollOption4").value.trim()
+      ].filter(Boolean);
+
+      if (!question || options.length < 2) {
+        alert("Enter poll question and at least 2 options.");
+        return;
+      }
+
+      await sendChatPayload({
+        type: "poll",
+        text: question,
+        question,
+        options,
+        votes: {}
+      });
+
+      document.getElementById("pollQuestion").value = "";
+      document.getElementById("pollOption1").value = "";
+      document.getElementById("pollOption2").value = "";
+      document.getElementById("pollOption3").value = "";
+      document.getElementById("pollOption4").value = "";
+      closePollModal();
+    };
+
+    window.votePoll = async function(chatId, messageId, optionIndex) {
+      if (!currentUser) return;
+      await update(ref(database, "messages/" + chatId + "/" + messageId + "/votes"), {
+        [currentUser.uid]: optionIndex
+      });
+    };
+
+    window.openContactModal = function() {
+      if (!selectedChatUser) return alert("Select a user first.");
+      document.getElementById("contactModal").style.display = "flex";
+    };
+
+    window.closeContactModal = function() {
+      document.getElementById("contactModal").style.display = "none";
+    };
+
+    window.sendContactMessage = async function() {
+      const name = document.getElementById("contactName").value.trim();
+      const phone = document.getElementById("contactPhone").value.trim();
+      const email = document.getElementById("contactEmail").value.trim();
+
+      if (!name || !phone) {
+        alert("Enter contact name and mobile number.");
+        return;
+      }
+
+      await sendChatPayload({
+        type: "contact",
+        text: name,
+        name,
+        phone,
+        email
+      });
+
+      document.getElementById("contactName").value = "";
+      document.getElementById("contactPhone").value = "";
+      document.getElementById("contactEmail").value = "";
+      closeContactModal();
+    };
+
+
+    window.openProfileEdit = function() {
+      document.getElementById("editFullName").value = currentUserData.fullName || "";
+      document.getElementById("editBio").value = currentUserData.bio || "";
+      document.getElementById("editPhone").value = currentUserData.phone || "";
+      document.getElementById("editAddress").value = currentUserData.address || "";
+      document.getElementById("editCity").value = currentUserData.city || "";
+      document.getElementById("editState").value = currentUserData.state || "";
+      document.getElementById("editCountry").value = currentUserData.country || "";
+      document.getElementById("editPincode").value = currentUserData.pincode || "";
+      document.getElementById("editDob").value = currentUserData.dob || "";
+      document.getElementById("editGender").value = currentUserData.gender || "";
+      document.getElementById("profileEditModal").style.display = "flex";
+    };
+
+    window.closeProfileEdit = function() {
+      document.getElementById("profileEditModal").style.display = "none";
+    };
+
+    window.saveProfileDetails = async function() {
+      const updatedProfile = {
+        fullName: document.getElementById("editFullName").value.trim(),
+        bio: document.getElementById("editBio").value.trim(),
+        phone: document.getElementById("editPhone").value.trim(),
+        address: document.getElementById("editAddress").value.trim(),
+        city: document.getElementById("editCity").value.trim(),
+        state: document.getElementById("editState").value.trim(),
+        country: document.getElementById("editCountry").value.trim(),
+        pincode: document.getElementById("editPincode").value.trim(),
+        dob: document.getElementById("editDob").value,
+        gender: document.getElementById("editGender").value.trim()
+      };
+
+      if (!updatedProfile.fullName) {
+        alert("Full name is required.");
+        return;
+      }
+
+      await update(ref(database, "users/" + currentUser.uid), updatedProfile);
+      await refreshCurrentUser();
+      closeProfileEdit();
+      alert("Profile updated.");
+    };
+
+    window.sendMessage = async function() {
+      const text = document.getElementById("messageInput").value.trim();
+      if (!selectedChatUser) {
+        alert("Select a user first.");
+        return;
+      }
+      if (!text) return;
+
+      await sendChatPayload({
+        type: "text",
+        text: text
+      });
+      document.getElementById("messageInput").value = "";
+    };
+
+    window.logoutUser = async function() {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
+  </script>
+</body>
+</html>

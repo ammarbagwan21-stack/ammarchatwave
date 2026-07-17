@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App Landing Page</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: white;
+    }
+
+    .navbar {
+      width: 100%;
+      padding: 24px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .nav-buttons a {
+      text-decoration: none;
+      color: white;
+      margin-left: 15px;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .login-btn {
+      border: 2px solid white;
+    }
+
+    .signup-btn {
+      background: white;
+      color: #4f46e5 !important;
+    }
+
+    .nav-buttons a:hover {
+      opacity: 0.85;
+      transform: translateY(-2px);
+      display: inline-block;
+    }
+
+    .hero {
+      min-height: calc(100vh - 90px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 8%;
+      gap: 40px;
+    }
+
+    .hero-content {
+      max-width: 540px;
+    }
+
+    .hero-content h1 {
+      font-size: 56px;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
+    .hero-content p {
+      font-size: 18px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+      color: #e0f2fe;
+    }
+
+    .hero-buttons a {
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-weight: bold;
+      margin-right: 15px;
+      display: inline-block;
+      transition: 0.3s;
+    }
+
+    .start-btn {
+      background: white;
+      color: #4f46e5;
+    }
+
+    .learn-btn {
+      border: 2px solid white;
+      color: white;
+    }
+
+    .hero-buttons a:hover {
+      transform: translateY(-3px);
+      opacity: 0.9;
+    }
+
+    .chat-card {
+      width: 360px;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(12px);
+      border-radius: 28px;
+      padding: 25px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    .profile-circle {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: white;
+      color: #4f46e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .chat-header h3 {
+      font-size: 18px;
+    }
+
+    .chat-header small {
+      color: #dbeafe;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 18px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .received {
+      background: white;
+      color: #1f2937;
+      border-bottom-left-radius: 4px;
+    }
+
+    .sent {
+      background: #312e81;
+      color: white;
+      margin-left: 50px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .input-box {
+      margin-top: 18px;
+      background: white;
+      color: #6b7280;
+      padding: 14px 18px;
+      border-radius: 25px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 850px) {
+      .hero {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .hero-content h1 {
+        font-size: 42px;
+      }
+
+      .chat-card {
+        width: 100%;
+        max-width: 380px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .navbar {
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .hero-content h1 {
+        font-size: 34px;
+      }
+
+      .hero-buttons a {
+        margin: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">ChatWave</div>
+    <div class="nav-buttons">
+      <a href="login.html" class="login-btn">Login</a>
+      <a href="signup.html" class="signup-btn">Sign Up</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Connect with friends instantly.</h1>
+      <p>
+        ChatWave is a modern chatting app where you can send messages, create groups,
+        and stay connected with your friends anytime, anywhere.
+      </p>
+      <div class="hero-buttons">
+        <a href="signup.html" class="start-btn">Get Started</a>
+        <a href="login.html" class="learn-btn">Login Now</a>
+      </div>
+    </div>
+
+    <div class="chat-card">
+      <div class="chat-header">
+        <div class="profile-circle">A</div>
+        <div>
+          <h3>Ammar</h3>
+          <small>Online now</small>
+        </div>
+      </div>
+
+      <div class="message received">Hey! Are you free today?</div>
+      <div class="message sent">Yes, let's chat on ChatWave!</div>
+      <div class="message received">Nice! This app looks awesome.</div>
+      <div class="input-box">Type your message...</div>
+    </div>
+  </section>
+</body>
+</html>

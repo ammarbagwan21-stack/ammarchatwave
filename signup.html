@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signup - ChatWave</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .signup-box {
+      width: 100%;
+      max-width: 430px;
+      background: white;
+      padding: 32px;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .signup-box h1 {
+      text-align: center;
+      color: #312e81;
+      margin-bottom: 8px;
+      font-size: 32px;
+    }
+
+    .signup-box p {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #374151;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 13px 15px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .input-group input:focus {
+      border-color: #4f46e5;
+    }
+
+    .signup-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: #4f46e5;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .signup-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .message {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 22px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .login-link a {
+      color: #4f46e5;
+      font-weight: bold;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-box">
+    <h1>Create Account</h1>
+    <p>Choose a unique username for your chat profile</p>
+
+    <div class="input-group">
+      <label>Unique Username</label>
+      <input type="text" id="username" placeholder="Example: ammar21" />
+    </div>
+
+    <div class="input-group">
+      <label>Full Name</label>
+      <input type="text" id="fullName" placeholder="Enter your name" />
+    </div>
+
+    <div class="input-group">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="Enter your email" />
+    </div>
+
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Create password" />
+    </div>
+
+    <button class="signup-btn" onclick="signupUser()">Sign Up</button>
+
+    <div id="message" class="message"></div>
+
+    <div class="login-link">
+      Already have an account? <a href="login.html">Login</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      updateProfile
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      get,
+      set
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXmAbn5R3Ndau0XWcecVFw1HH2MIAp8KE",
+      authDomain: "whatshapp-2fb44.firebaseapp.com",
+      databaseURL: "https://whatshapp-2fb44-default-rtdb.firebaseio.com",
+      projectId: "whatshapp-2fb44",
+      storageBucket: "whatshapp-2fb44.firebasestorage.app",
+      messagingSenderId: "670669863082",
+      appId: "1:670669863082:web:e186e5125a306b81ff78d3",
+      measurementId: "G-WGFE5LJSZM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    function showMessage(text, type = "success") {
+      const message = document.getElementById("message");
+      message.innerText = text;
+      message.style.color = type === "success" ? "green" : "red";
+    }
+
+    function cleanUsername(username) {
+      return username.toLowerCase().trim().replace(/[^a-z0-9_]/g, "");
+    }
+
+    window.signupUser = async function() {
+      const usernameInput = document.getElementById("username").value;
+      const username = cleanUsername(usernameInput);
+      const fullName = document.getElementById("fullName").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!username || !fullName || !email || !password) {
+        showMessage("Please fill all fields", "error");
+        return;
+      }
+
+      if (username.length < 4) {
+        showMessage("Username must be at least 4 characters", "error");
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage("Password must be at least 6 characters", "error");
+        return;
+      }
+
+      try {
+        const usernameRef = ref(database, "usernames/" + username);
+        const usernameSnapshot = await get(usernameRef);
+
+        if (usernameSnapshot.exists()) {
+          showMessage("Username already taken. Try another username.", "error");
+          return;
+        }
+
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await updateProfile(user, {
+          displayName: username
+        });
+
+        await set(ref(database, "users/" + user.uid), {
+          uid: user.uid,
+          username: username,
+          fullName: fullName,
+          email: email,
+          photo: "",
+          bio: "Hey there! I am using ChatWave.",
+          followersCount: 0,
+          followingCount: 0,
+          createdAt: new Date().toISOString()
+        });
+
+        await set(ref(database, "usernames/" + username), {
+          uid: user.uid,
+          email: email
+        });
+
+        await set(ref(database, "followers/" + user.uid), {});
+        await set(ref(database, "following/" + user.uid), {});
+
+        showMessage("Signup successful! Redirecting...");
+
+        setTimeout(() => {
+          window.location.href = "chat.html";
+        }, 1200);
+      } catch (error) {
+        showMessage(error.message, "error");
+      }
+    };
+  </script>
+</body>
+</html>

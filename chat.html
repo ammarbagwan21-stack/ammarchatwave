@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,105 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChatWave Dashboard</title>
   <link rel="icon" type="image/png" href="favicon.png">
-  <style>
+  <style
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
-    body { background: #f3f4f6; color: #111827; min-height: 100vh; overflow-x: hidden; }
+    body { background: #f3f4f6; color: #111827; }
     .app { display: grid; grid-template-columns: 280px 1fr 320px; min-height: 100vh; }
     .sidebar, .profile-panel { background: white; padding: 22px; border-right: 1px solid #e5e7eb; }
     .profile-panel { border-right: none; border-left: 1px solid #e5e7eb; }
     .logo { font-size: 26px; font-weight: bold; color: #4f46e5; margin-bottom: 25px; }
-    .menu button, .logout-btn { width: 100%; padding: 13px; margin-bottom: 10px; border: none; border-radius: 12px; background: #eef2ff; color: #312e81; font-weight: bold; cursor: pointer; text-align: left; transition: all 0.2s ease; }
-    .menu button.active, .menu button:hover { background: #4f46e5; color: white; }
-    .logout-btn { background: #fee2e2; color: #991b1b; }
-    .logout-btn:hover { background: #ef4444; color: white; }
-    
-    .main { padding: 24px; overflow-y: auto; }
+    .menu button, .logout-btn { width: 100%; padding: 13px; margin-bottom: 10px; border: none; border-radius: 12px; background: #eef2ff; color: #312e81; font-weight: bold; cursor: pointer; text-align: left; }
+    .menu button.active { background: #4f46e5; color: white; }
+    .main { padding: 24px; }
     .topbar { display: flex; gap: 10px; margin-bottom: 20px; }
     .topbar input { flex: 1; padding: 14px; border: 1px solid #d1d5db; border-radius: 14px; outline: none; }
-    
-    button { cursor: pointer; transition: background-color 0.2s ease; }
-    .primary-btn, .send-btn, .follow-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #4f46e5; color: white; font-weight: bold; flex-shrink: 0; }
-    .primary-btn:hover, .send-btn:hover, .follow-btn:hover { background: #4338ca; }
-    .danger-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #ef4444; color: white; font-weight: bold; flex-shrink: 0; }
-    .danger-btn:hover { background: #dc2626; }
-    .gray-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #e5e7eb; color: #111827; font-weight: bold; flex-shrink: 0; }
-    .gray-btn:hover { background: #d1d5db; }
-    
+    button { cursor: pointer; }
+    .primary-btn, .send-btn, .follow-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #4f46e5; color: white; font-weight: bold; }
+    .danger-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #ef4444; color: white; font-weight: bold; }
+    .gray-btn { padding: 12px 16px; border: none; border-radius: 14px; background: #e5e7eb; color: #111827; font-weight: bold; }
     .section { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
-    .section.hidden { display: none !important; }
     .section h2 { margin-bottom: 15px; color: #312e81; }
-    
-    .user-card, .chat-user, .request-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px; border: 1px solid #e5e7eb; border-radius: 14px; margin-bottom: 10px; flex-wrap: wrap; }
-    .avatar { width: 42px; height: 42px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; flex-shrink: 0; }
-    .user-left { display: flex; align-items: center; cursor: pointer; }
-    .username { font-weight: bold; word-break: break-all; }
+    .user-card, .chat-user, .request-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px; border: 1px solid #e5e7eb; border-radius: 14px; margin-bottom: 10px; }
+    .avatar { width: 42px; height: 42px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
+    .user-left { display: flex; align-items: center; }
+    .username { font-weight: bold; }
     .small { color: #6b7280; font-size: 13px; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
-    
-    .chat-box { height: 360px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 16px; padding: 15px; background: #f9fafb; margin-bottom: 12px; display: flex; flex-direction: column; }
-    .message { max-width: 70%; padding: 11px 14px; border-radius: 16px; margin-bottom: 10px; font-size: 14px; word-wrap: break-word; word-break: break-word; }
-    .sent { background: #4f46e5; color: white; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 4px; }
-    .sent .doc-link, .sent .map-link { color: #e0e7ff; }
-    .received { background: white; border: 1px solid #e5e7eb; align-self: flex-start; margin-right: auto; border-bottom-left-radius: 4px; }
-    
-    .message-input { display: flex; gap: 10px; align-items: center; }
-    .message-input input { flex: 1; padding: 14px; border: 1px solid #d1d5db; border-radius: 14px; outline: none; font-size: 14px; }
-    
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .chat-box { height: 360px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 16px; padding: 15px; background: #f9fafb; margin-bottom: 12px; }
+    .message { max-width: 70%; padding: 11px 14px; border-radius: 16px; margin-bottom: 10px; font-size: 14px; }
+    .sent { background: #4f46e5; color: white; margin-left: auto; }
+    .received { background: white; border: 1px solid #e5e7eb; }
+    .message-input { display: flex; gap: 10px; }
+    .message-input input { flex: 1; padding: 14px; border: 1px solid #d1d5db; border-radius: 14px; outline: none; }
     .profile-card { text-align: center; }
     .big-avatar { width: 90px; height: 90px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: bold; margin: 0 auto 14px; }
     .stats { display: flex; justify-content: space-around; margin-top: 18px; gap: 10px; }
     .stats div { background: #eef2ff; padding: 14px; border-radius: 14px; width: 50%; }
-    
+    .hidden { display: none; }
+    @media(max-width: 950px) { .app { grid-template-columns: 1fr; } .sidebar, .profile-panel { border: none; } }
+  
     .call-bar { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
     .call-btn { padding: 10px 14px; border: none; border-radius: 12px; background: #10b981; color: white; font-weight: bold; }
     .voice-btn { background: #0ea5e9; }
     .end-call-btn { background: #ef4444; }
     .video-area { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
     .video-area video { width: 100%; height: 180px; background: #111827; border-radius: 16px; object-fit: cover; }
-    
-    .incoming-call { position: fixed; top: 20px; right: 20px; background: white; padding: 18px; border-radius: 18px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); z-index: 999; display: none; border: 1px solid #e5e7eb; }
+    .incoming-call { position: fixed; top: 20px; right: 20px; background: white; padding: 18px; border-radius: 18px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); z-index: 999; display: none; }
     .incoming-call h3 { color: #312e81; margin-bottom: 8px; }
 
     .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px; }
     .tool-btn { padding: 10px 12px; border: none; border-radius: 12px; background: #eef2ff; color: #312e81; font-weight: bold; }
-    .media-preview { max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; display: block; }
+    .media-preview { max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; }
     .doc-link, .map-link { color: inherit; font-weight: bold; text-decoration: underline; }
     .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
     .gallery-item { border: 1px solid #e5e7eb; border-radius: 14px; padding: 8px; background: #f9fafb; }
     .gallery-item img, .gallery-item video { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; background: #111827; }
-    
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; }
-    .modal-card { background: white; width: min(480px, 100%); border-radius: 20px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.25); max-height: 90vh; overflow-y: auto; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-card { background: white; width: min(480px, 100%); border-radius: 20px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
     .modal-card h3 { color: #312e81; margin-bottom: 12px; }
-    .modal-card input, .modal-card textarea { width: 100%; padding: 13px; border: 1px solid #d1d5db; border-radius: 12px; margin-bottom: 10px; outline: none; font-size: 14px; }
+    .modal-card input, .modal-card textarea { width: 100%; padding: 13px; border: 1px solid #d1d5db; border-radius: 12px; margin-bottom: 10px; outline: none; }
     .ai-box { border: 1px solid #e5e7eb; border-radius: 16px; padding: 12px; background: #f9fafb; min-height: 120px; margin-bottom: 10px; }
     .live-badge { display:inline-block; padding: 4px 8px; background:#dcfce7; color:#166534; border-radius:999px; font-size:12px; font-weight:bold; margin-top:6px; }
 
-    .attach-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
-    .attach-btn { width: 48px; height: 48px; border: none; border-radius: 50%; background: #4f46e5; color: white; font-size: 26px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .attach-wrap { position: relative; display: flex; align-items: center; }
+    .attach-btn { width: 48px; height: 48px; border: none; border-radius: 50%; background: #4f46e5; color: white; font-size: 26px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
     .attach-menu { position: absolute; bottom: 58px; left: 0; width: 270px; background: white; border: 1px solid #e5e7eb; border-radius: 18px; padding: 12px; box-shadow: 0 18px 45px rgba(0,0,0,.18); display: none; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 50; }
     .attach-menu.show { display: grid; }
-    .attach-option { border: none; border-radius: 14px; padding: 12px 10px; background: #eef2ff; color: #312e81; font-weight: bold; text-align: left; cursor: pointer; }
+    .attach-option { border: none; border-radius: 14px; padding: 12px 10px; background: #eef2ff; color: #312e81; font-weight: bold; text-align: left; }
     .attach-option span { display:block; font-size: 20px; margin-bottom: 4px; }
-    
     .poll-option { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; background:rgba(255,255,255,.18); border-radius:12px; margin-top:7px; border:1px solid rgba(255,255,255,.22); }
     .received .poll-option { background:#f3f4f6; border-color:#e5e7eb; }
-    .poll-vote-btn { border:none; border-radius:10px; padding:6px 10px; background:#10b981; color:white; font-weight:bold; cursor: pointer; }
+    .poll-vote-btn { border:none; border-radius:10px; padding:6px 10px; background:#10b981; color:white; font-weight:bold; }
     .contact-card { display:flex; align-items:center; gap:10px; }
-    .contact-icon { width:38px; height:38px; border-radius:50%; background:#10b981; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink: 0; }
+    .contact-icon { width:38px; height:38px; border-radius:50%; background:#10b981; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; }
 
-    .camera-btn { width: 48px; height: 48px; border: none; border-radius: 50%; background: #10b981; color: white; font-size: 20px; font-weight: bold; display:flex; align-items:center; justify-content:center; flex-shrink: 0; cursor: pointer; }
+    .camera-btn { width: 48px; height: 48px; border: none; border-radius: 50%; background: #10b981; color: white; font-size: 20px; font-weight: bold; display:flex; align-items:center; justify-content:center; }
     .profile-details { margin-top: 16px; text-align: left; background:#f9fafb; border:1px solid #e5e7eb; border-radius:16px; padding:12px; }
-    .profile-details p { margin: 7px 0; font-size: 14px; word-break: break-word; }
+    .profile-details p { margin: 7px 0; font-size: 14px; }
     .profile-edit-btn { margin-top: 14px; width:100%; }
-
-    @media(max-width: 950px) { 
-      .app { grid-template-columns: 1fr; } 
-      .sidebar, .profile-panel { border: none; } 
-      .video-area { grid-template-columns: 1fr; }
-      .message { max-width: 85%; }
-    }
-  </style>
+></style>
 </head>
 <body>
   <div class="incoming-call" id="incomingCallBox">
@@ -116,9 +93,10 @@
     </div>
   </div>
 
-  <input type="file" id="mediaInput" accept="image/*,video/*" class="section hidden" onchange="sendMediaFile(event)">
-  <input type="file" id="cameraInput" accept="image/*" capture="environment" class="section hidden" onchange="sendCameraPhoto(event)">
-  <input type="file" id="documentInput" accept=".pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx" class="section hidden" onchange="sendDocumentFile(event)">
+
+  <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden" onchange="sendMediaFile(event)">
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="sendCameraPhoto(event)">
+  <input type="file" id="documentInput" accept=".pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx" class="hidden" onchange="sendDocumentFile(event)">
 
   <div class="modal" id="eventModal">
     <div class="modal-card">
@@ -132,6 +110,7 @@
       </div>
     </div>
   </div>
+
 
   <div class="modal" id="pollModal">
     <div class="modal-card">
@@ -253,6 +232,11 @@
         </div>
       </section>
 
+
+      
+
+      
+
       <section id="profileSectionMobile" class="section hidden">
         <h2>My Profile</h2>
         <div id="mobileProfileBox"></div>
@@ -329,7 +313,7 @@
       }
       currentUser = user;
       const snapshot = await get(ref(database, "users/" + user.uid));
-      currentUserData = snapshot.val() || {};
+      currentUserData = snapshot.val();
       loadProfile();
       loadRequests();
       loadFollowingChats();
@@ -338,7 +322,7 @@
 
     async function refreshCurrentUser() {
       const snapshot = await get(ref(database, "users/" + currentUser.uid));
-      currentUserData = snapshot.val() || {};
+      currentUserData = snapshot.val();
       loadProfile();
     }
 
@@ -397,10 +381,10 @@
       box.innerHTML += `
         <div class="user-card">
           <div class="user-left">
-            <div class="avatar">${user.username ? user.username.charAt(0).toUpperCase() : '?'}</div>
+            <div class="avatar">${user.username.charAt(0).toUpperCase()}</div>
             <div>
-              <div class="username">${escapeHtml(user.fullName || '')}</div>
-              <div class="small">@${escapeHtml(user.username || '')}</div>
+              <div class="username">${user.fullName}</div>
+              <div class="small">@${user.username}</div>
             </div>
           </div>
           <div class="actions">${buttonHtml}</div>
@@ -497,10 +481,10 @@
         box.innerHTML += `
           <div class="request-card">
             <div class="user-left">
-              <div class="avatar">${req.username ? req.username.charAt(0).toUpperCase() : '?'}</div>
+              <div class="avatar">${req.username.charAt(0).toUpperCase()}</div>
               <div>
-                <div class="username">${escapeHtml(req.fullName || '')}</div>
-                <div class="small">@${escapeHtml(req.username || '')} wants to follow you</div>
+                <div class="username">${req.fullName}</div>
+                <div class="small">@${req.username} wants to follow you</div>
               </div>
             </div>
             <div class="actions">
@@ -518,7 +502,7 @@
       await remove(ref(database, "followRequests/" + currentUser.uid + "/" + fromUid));
 
       const fromUserSnap = await get(ref(database, "users/" + fromUid));
-      const fromUser = fromUserSnap.val() || {};
+      const fromUser = fromUserSnap.val();
       await update(ref(database, "users/" + fromUid), {
         followingCount: (fromUser.followingCount || 0) + 1
       });
@@ -547,7 +531,7 @@
       });
 
       const targetSnap = await get(ref(database, "users/" + targetUid));
-      const targetData = targetSnap.val() || {};
+      const targetData = targetSnap.val();
       await update(ref(database, "users/" + targetUid), {
         followersCount: Math.max((targetData.followersCount || 0) - 1, 0)
       });
@@ -590,14 +574,14 @@
       const following = followingSnap.val();
       for (const uid in following) {
         const userSnap = await get(ref(database, "users/" + uid));
-        const user = userSnap.val() || {};
+        const user = userSnap.val();
         chatUsersBox.innerHTML += `
           <div class="chat-user">
             <div class="user-left" onclick="openChat('${uid}', '${user.username}', '${user.fullName}')">
-              <div class="avatar">${user.username ? user.username.charAt(0).toUpperCase() : '?'}</div>
+              <div class="avatar">${user.username.charAt(0).toUpperCase()}</div>
               <div>
-                <div class="username">${escapeHtml(user.fullName || '')}</div>
-                <div class="small">@${escapeHtml(user.username || '')}</div>
+                <div class="username">${user.fullName}</div>
+                <div class="small">@${user.username}</div>
               </div>
             </div>
             <div class="actions">
@@ -615,7 +599,7 @@
       const chatBox = document.getElementById("chatBox");
 
       onValue(ref(database, "messages/" + chatId), (snapshot) => {
-        chatBox.innerHTML = `<p class="small" style="margin-bottom:10px;">Chat with @${escapeHtml(username)}</p>`;
+        chatBox.innerHTML = `<p class="small">Chat with @${username}</p>`;
         if (snapshot.exists()) {
           snapshot.forEach(child => {
             const msg = child.val();
@@ -635,11 +619,9 @@
 
       document.getElementById("remoteVideo").srcObject = remoteStream;
 
-      if (localStream) {
-        localStream.getTracks().forEach(track => {
-          peerConnection.addTrack(track, localStream);
-        });
-      }
+      localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+      });
 
       peerConnection.ontrack = event => {
         event.streams[0].getTracks().forEach(track => {
@@ -815,6 +797,7 @@
       document.getElementById("incomingCallBox").style.display = "none";
       showVideoArea(false);
     }
+
 
     function escapeHtml(value) {
       return String(value || "").replace(/[&<>"']/g, char => ({
@@ -1017,6 +1000,11 @@
       closeEventModal();
     };
 
+    
+
+    
+
+
     window.toggleAttachMenu = function() {
       const menu = document.getElementById("attachMenu");
       menu.classList.toggle("show");
@@ -1134,6 +1122,7 @@
       closeContactModal();
     };
 
+
     window.openProfileEdit = function() {
       document.getElementById("editFullName").value = currentUserData.fullName || "";
       document.getElementById("editBio").value = currentUserData.bio || "";
@@ -1199,5 +1188,3 @@
   </script>
 </body>
 </html>
-index.html
-Displaying index.html.

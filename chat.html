@@ -57,7 +57,7 @@
     .message-input input { flex: 1; padding: 13px 16px; border: 1px solid #cbd5e1; border-radius: 14px; outline: none; }
     .send-btn { padding: 12px 20px; border: none; border-radius: 14px; background: #4f46e5; color: white; font-weight: 700; }
 
-    /* WebRTC Calling & Media UI */
+    /* Calling & Media UI */
     .call-bar { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
     .call-btn { padding: 10px 14px; border: none; border-radius: 12px; background: #10b981; color: white; font-weight: 600; font-size: 13px; }
     .voice-btn { background: #0284c7; }
@@ -65,11 +65,11 @@
     .video-area { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
     .video-area video { width: 100%; height: 180px; background: #0f172a; border-radius: 16px; object-fit: cover; }
     .incoming-call { position: fixed; top: 20px; right: 20px; background: white; padding: 20px; border-radius: 18px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); z-index: 999; display: none; border: 1px solid #e2e8f0; }
-    .media-preview { max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; }
+    .media-preview { max-width: 240px; width: 100%; border-radius: 12px; margin-top: 6px; display: block; }
     .doc-link, .map-link { color: inherit; font-weight: bold; text-decoration: underline; }
     .live-badge { display:inline-block; padding: 4px 8px; background:#dcfce7; color:#166534; border-radius:999px; font-size:11px; font-weight:bold; margin-top:6px; }
 
-    /* Attachments & Extra Features */
+    /* Attachments Menu */
     .attach-wrap { position: relative; display: flex; align-items: center; }
     .attach-btn { width: 44px; height: 44px; border: none; border-radius: 50%; background: #4f46e5; color: white; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
     .attach-menu { position: absolute; bottom: 54px; left: 0; width: 260px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; box-shadow: 0 18px 40px rgba(0,0,0,.15); display: none; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 50; }
@@ -80,7 +80,7 @@
     .received .poll-option { background:#f1f5f9; border-color:#e2e8f0; }
     .poll-vote-btn { border:none; border-radius:8px; padding:5px 8px; background:#10b981; color:white; font-weight:bold; font-size:11px; }
 
-    /* Profile Side Panel */
+    /* Side Profile Panel */
     .profile-panel { background: #ffffff; padding: 26px; border-left: 1px solid #e2e8f0; overflow-y: auto; max-height: 100vh; }
     .profile-card { text-align: center; }
     .big-avatar { width: 90px; height: 90px; border-radius: 50%; background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; margin: 0 auto 14px; border: 3px solid #e0e7ff; }
@@ -115,9 +115,15 @@
   </div>
 
   <!-- Hidden Inputs for Attachments -->
-  <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden" onchange="sendMediaFile(event)">
-  <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="sendCameraPhoto(event)">
-  <input type="file" id="documentInput" accept=".pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx" class="hidden" onchange="sendDocumentFile(event)">
+  <input type="file" id="mediaInput" accept="image/*,video/*" class="hidden">
+  <input type="file" id="cameraInput" accept="image/*" class="hidden">
+  <input type="file" id="documentInput" accept=".pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx" class="hidden">
+
+  <!-- Live Location Controller Bar -->
+  <div id="liveLocationBar" style="display:none; background:#ecfdf5; border:1px solid #a7f3d0; padding:10px 16px; border-radius:12px; margin-bottom:10px; align-items:center; justify-content:space-between;">
+    <span class="small" style="color:#065f46; font-weight:bold;">🟢 Live Location is active and updating</span>
+    <button class="danger-btn" style="padding:6px 12px; font-size:12px;" onclick="stopLiveLocation()">Stop Sharing</button>
+  </div>
 
   <!-- Event Modal -->
   <div class="modal" id="eventModal">
@@ -286,7 +292,6 @@
     </aside>
   </div>
 
-  <!-- Application Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -319,6 +324,7 @@
     let activeCallId = null;
     let incomingCallData = null;
     let liveLocationWatchId = null;
+    let activeLiveLocationMsgId = null;
 
     const servers = {
       iceServers: [
@@ -352,7 +358,7 @@
       if (button) button.classList.add("active");
     };
 
-    // Auth Initialization
+    // Authentication Guard
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "login.html";
@@ -371,7 +377,6 @@
       loadProfile();
     }
 
-    // Modern Profile Panel Render
     function loadProfile() {
       const username = currentUserData.username || "user";
       const initial = username.charAt(0).toUpperCase();
@@ -408,7 +413,6 @@
       document.getElementById("mobileProfileBox").innerHTML = html;
     }
 
-    // Relationship Checker
     async function getRelationStatus(targetUid) {
       const followingSnap = await get(ref(database, `following/${currentUser.uid}/${targetUid}`));
       if (followingSnap.exists()) return "following";
@@ -419,7 +423,6 @@
       return "none";
     }
 
-    // Dynamic Card Builder
     async function renderUserCard(user, box, showUnfollow = false) {
       if (!user || !user.uid) return;
       const status = await getRelationStatus(user.uid);
@@ -456,7 +459,6 @@
       box.appendChild(card);
     }
 
-    // Search Execution
     window.searchUser = async function() {
       const query = cleanUsername(document.getElementById("searchInput").value);
       const resultBox = document.getElementById("searchResults");
@@ -503,7 +505,6 @@
       if (e.key === "Enter") window.searchUser();
     });
 
-    // Load All Users
     window.loadAllUsers = async function() {
       const box = document.getElementById("allUsersBox");
       box.innerHTML = `<p class="small">Loading users...</p>`;
@@ -525,15 +526,12 @@
           }
         }
 
-        if (count === 0) {
-          box.innerHTML = `<p class="small">No other users in the community yet.</p>`;
-        }
+        if (count === 0) box.innerHTML = `<p class="small">No other users in the community yet.</p>`;
       } catch (err) {
         box.innerHTML = `<p class="small" style="color:red;">Error loading users: ${err.message}</p>`;
       }
     };
 
-    // Follow Request System
     window.sendFollowRequest = async function(targetUid) {
       try {
         const already = await get(ref(database, `following/${currentUser.uid}/${targetUid}`));
@@ -682,7 +680,7 @@
       }
     };
 
-    // Chat Conversation Controller
+    // Chat Message Viewer
     window.openChat = function(uid, username, fullName) {
       selectedChatUser = { uid, username, fullName };
       document.getElementById("chatHeaderTitle").innerText = `Chat with ${fullName}`;
@@ -713,7 +711,7 @@
         return `<div class="message ${className}"><div>${safeText}</div><video class="media-preview" controls src="${msg.fileUrl}"></video></div>`;
       }
       if (msg.type === "document") {
-        return `<div class="message ${className}">📄 <a class="doc-link" href="${msg.fileUrl}" target="_blank">${escapeHtml(msg.fileName || "Download document")}</a></div>`;
+        return `<div class="message ${className}">📄 <a class="doc-link" href="${msg.fileUrl}" download="${escapeHtml(msg.fileName || 'file')}" target="_blank">${escapeHtml(msg.fileName || "Download document")}</a></div>`;
       }
       if (msg.type === "location" || msg.type === "liveLocation") {
         const url = `https://www.google.com/maps?q=${msg.latitude},${msg.longitude}`;
@@ -740,15 +738,19 @@
     }
 
     async function sendChatPayload(payload) {
-      if (!selectedChatUser) return alert("Select a chat first.");
+      if (!selectedChatUser) {
+        alert("Please select a conversation first.");
+        return null;
+      }
       const chatId = getChatId(currentUser.uid, selectedChatUser.uid);
-      await push(ref(database, `messages/${chatId}`), {
+      const newMsgRef = push(ref(database, `messages/${chatId}`));
+      await set(newMsgRef, {
         senderId: currentUser.uid,
         receiverId: selectedChatUser.uid,
         createdAt: new Date().toISOString(),
         ...payload
       });
-      return true;
+      return newMsgRef.key;
     }
 
     window.sendMessage = async function() {
@@ -762,6 +764,208 @@
     document.getElementById("messageInput").addEventListener("keypress", (e) => {
       if (e.key === "Enter") window.sendMessage();
     });
+
+    // File Upload Fallback Mechanism (Firebase Storage -> Base64 Data URL)
+    async function uploadOrConvertFile(file, folder) {
+      try {
+        const cleanName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const fRef = storageRef(storage, `chatFiles/${currentUser.uid}/${folder}/${cleanName}`);
+        await uploadBytes(fRef, file);
+        return await getDownloadURL(fRef);
+      } catch (storageError) {
+        console.warn("Storage upload rejected, falling back to local base64 store:", storageError);
+        return new Promise((resolve, reject) => {
+          if (file.size > 2 * 1024 * 1024) {
+            reject(new Error("File exceeds 2MB limit for direct transfer. Check Firebase Storage rules."));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+    }
+
+    // Attachment Event Listeners
+    document.getElementById("mediaInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      if (!selectedChatUser) return alert("Select a conversation first.");
+
+      const isImg = file.type.startsWith("image/");
+      const isVid = file.type.startsWith("video/");
+      if (!isImg && !isVid) return alert("Please select an image or video file.");
+
+      try {
+        const url = await uploadOrConvertFile(file, isImg ? "images" : "videos");
+        await sendChatPayload({
+          type: isImg ? "image" : "video",
+          text: file.name,
+          fileUrl: url,
+          fileName: file.name
+        });
+      } catch (err) {
+        alert("Upload error: " + err.message);
+      }
+    });
+
+    document.getElementById("documentInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      if (!selectedChatUser) return alert("Select a conversation first.");
+
+      try {
+        const url = await uploadOrConvertFile(file, "documents");
+        await sendChatPayload({
+          type: "document",
+          text: file.name,
+          fileUrl: url,
+          fileName: file.name
+        });
+      } catch (err) {
+        alert("Document upload error: " + err.message);
+      }
+    });
+
+    // Camera Capture Handler
+    window.openCamera = function() {
+      if (!selectedChatUser) return alert("Select a conversation first.");
+      document.getElementById("cameraInput").click();
+    };
+
+    document.getElementById("cameraInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      if (!selectedChatUser) return alert("Select a conversation first.");
+
+      try {
+        const url = await uploadOrConvertFile(file, "camera");
+        await sendChatPayload({
+          type: "image",
+          text: "Camera Photo",
+          fileUrl: url,
+          fileName: "photo.jpg"
+        });
+      } catch (err) {
+        alert("Camera photo error: " + err.message);
+      }
+    });
+
+    // Attach Menu Actions
+    window.toggleAttachMenu = () => document.getElementById("attachMenu").classList.toggle("show");
+    
+    window.openFromAttach = (type) => {
+      document.getElementById("attachMenu").classList.remove("show");
+      if (!selectedChatUser) return alert("Select a conversation first.");
+      if (type === "media") document.getElementById("mediaInput").click();
+      if (type === "document") document.getElementById("documentInput").click();
+      if (type === "location") window.shareLocation();
+      if (type === "liveLocation") window.startLiveLocation();
+      if (type === "event") document.getElementById("eventModal").style.display = "flex";
+      if (type === "poll") document.getElementById("pollModal").style.display = "flex";
+      if (type === "contact") document.getElementById("contactModal").style.display = "flex";
+    };
+
+    // Static Location Sharing
+    window.shareLocation = function() {
+      if (!navigator.geolocation) return alert("Geolocation not supported on this browser.");
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        await sendChatPayload({
+          type: "location",
+          text: "Static Location",
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude
+        });
+      }, err => alert("Location error: " + err.message));
+    };
+
+    // Live Location Fix: Single updating message & watch clearing
+    window.startLiveLocation = async function() {
+      if (!navigator.geolocation) return alert("Geolocation not supported.");
+      if (liveLocationWatchId) window.stopLiveLocation();
+
+      try {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          activeLiveLocationMsgId = await sendChatPayload({
+            type: "liveLocation",
+            text: "My Live Location (Active)",
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          });
+
+          document.getElementById("liveLocationBar").style.display = "flex";
+
+          liveLocationWatchId = navigator.geolocation.watchPosition(async (newPos) => {
+            if (activeLiveLocationMsgId && selectedChatUser) {
+              const chatId = getChatId(currentUser.uid, selectedChatUser.uid);
+              await update(ref(database, `messages/${chatId}/${activeLiveLocationMsgId}`), {
+                latitude: newPos.coords.latitude,
+                longitude: newPos.coords.longitude,
+                updatedAt: new Date().toISOString()
+              });
+            }
+          }, err => console.warn(err), { enableHighAccuracy: true, maximumAge: 5000 });
+        }, err => alert("Failed to fetch location: " + err.message));
+      } catch (e) {
+        alert("Live location error: " + e.message);
+      }
+    };
+
+    window.stopLiveLocation = function() {
+      if (liveLocationWatchId) {
+        navigator.geolocation.clearWatch(liveLocationWatchId);
+        liveLocationWatchId = null;
+      }
+      if (activeLiveLocationMsgId && selectedChatUser) {
+        const chatId = getChatId(currentUser.uid, selectedChatUser.uid);
+        update(ref(database, `messages/${chatId}/${activeLiveLocationMsgId}`), {
+          text: "Live Location (Ended)"
+        });
+        activeLiveLocationMsgId = null;
+      }
+      document.getElementById("liveLocationBar").style.display = "none";
+      alert("Live location stopped.");
+    };
+
+    // Event, Poll & Contact Senders
+    window.sendEventMessage = async () => {
+      const title = document.getElementById("eventTitle").value.trim();
+      const dt = document.getElementById("eventDateTime").value;
+      const note = document.getElementById("eventNote").value.trim();
+      if (!title || !dt) return alert("Provide an event title and date.");
+      await sendChatPayload({ type: "event", title, dateTime: dt, note, text: title });
+      closeModal("eventModal");
+    };
+
+    window.sendPollMessage = async () => {
+      const question = document.getElementById("pollQuestion").value.trim();
+      const options = [
+        document.getElementById("pollOption1").value.trim(),
+        document.getElementById("pollOption2").value.trim(),
+        document.getElementById("pollOption3").value.trim(),
+        document.getElementById("pollOption4").value.trim()
+      ].filter(Boolean);
+      if (!question || options.length < 2) return alert("Poll requires a question and at least 2 options.");
+      await sendChatPayload({ type: "poll", text: question, question, options, votes: {} });
+      closeModal("pollModal");
+    };
+
+    window.votePoll = async (chatId, messageId, idx) => {
+      await update(ref(database, `messages/${chatId}/${messageId}/votes`), { [currentUser.uid]: idx });
+    };
+
+    window.sendContactMessage = async () => {
+      const name = document.getElementById("contactName").value.trim();
+      const phone = document.getElementById("contactPhone").value.trim();
+      const email = document.getElementById("contactEmail").value.trim();
+      if (!name || !phone) return alert("Enter contact name and phone number.");
+      await sendChatPayload({ type: "contact", text: name, name, phone, email });
+      closeModal("contactModal");
+    };
 
     // Profile Details Editor
     window.openProfileEdit = function() {
@@ -798,111 +1002,7 @@
       alert("Profile updated successfully!");
     };
 
-    // Attachments, Polls, Calls
-    window.toggleAttachMenu = () => document.getElementById("attachMenu").classList.toggle("show");
-    window.openFromAttach = (type) => {
-      document.getElementById("attachMenu").classList.remove("show");
-      if (!selectedChatUser) return alert("Select a conversation first.");
-      if (type === "media") document.getElementById("mediaInput").click();
-      if (type === "document") document.getElementById("documentInput").click();
-      if (type === "location") window.shareLocation();
-      if (type === "liveLocation") window.startLiveLocation();
-      if (type === "event") document.getElementById("eventModal").style.display = "flex";
-      if (type === "poll") document.getElementById("pollModal").style.display = "flex";
-      if (type === "contact") document.getElementById("contactModal").style.display = "flex";
-    };
-
-    window.openCamera = () => {
-      if (!selectedChatUser) return alert("Select a conversation first.");
-      document.getElementById("cameraInput").click();
-    };
-
-    async function uploadChatFile(file, folder) {
-      const cleanName = Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const fRef = storageRef(storage, `chatFiles/${currentUser.uid}/${folder}/${cleanName}`);
-      await uploadBytes(fRef, file);
-      return await getDownloadURL(fRef);
-    }
-
-    window.sendMediaFile = async (e) => {
-      const file = e.target.files[0];
-      e.target.value = "";
-      if (!file) return;
-      const isImg = file.type.startsWith("image/");
-      const isVid = file.type.startsWith("video/");
-      if (!isImg && !isVid) return alert("Please select an image or video.");
-      const url = await uploadChatFile(file, isImg ? "images" : "videos");
-      await sendChatPayload({ type: isImg ? "image" : "video", text: file.name, fileUrl: url, fileName: file.name });
-    };
-
-    window.sendCameraPhoto = async (e) => {
-      const file = e.target.files[0];
-      e.target.value = "";
-      if (!file) return;
-      const url = await uploadChatFile(file, "camera");
-      await sendChatPayload({ type: "image", text: "Camera Photo", fileUrl: url, fileName: "camera.jpg" });
-    };
-
-    window.sendDocumentFile = async (e) => {
-      const file = e.target.files[0];
-      e.target.value = "";
-      if (!file) return;
-      const url = await uploadChatFile(file, "documents");
-      await sendChatPayload({ type: "document", text: file.name, fileUrl: url, fileName: file.name });
-    };
-
-    window.shareLocation = () => {
-      if (!navigator.geolocation) return alert("Geolocation not supported.");
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        await sendChatPayload({ type: "location", text: "Shared Location", latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      }, err => alert(err.message));
-    };
-
-    window.startLiveLocation = () => {
-      if (!navigator.geolocation) return alert("Geolocation not supported.");
-      if (liveLocationWatchId) navigator.geolocation.clearWatch(liveLocationWatchId);
-      liveLocationWatchId = navigator.geolocation.watchPosition(async (pos) => {
-        await sendChatPayload({ type: "liveLocation", text: "Live Location", latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      }, err => alert(err.message), { enableHighAccuracy: true });
-      alert("Live location sharing active.");
-    };
-
-    window.sendEventMessage = async () => {
-      const title = document.getElementById("eventTitle").value.trim();
-      const dt = document.getElementById("eventDateTime").value;
-      const note = document.getElementById("eventNote").value.trim();
-      if (!title || !dt) return alert("Provide an event title and time.");
-      await sendChatPayload({ type: "event", title, dateTime: dt, note, text: title });
-      closeModal("eventModal");
-    };
-
-    window.sendPollMessage = async () => {
-      const question = document.getElementById("pollQuestion").value.trim();
-      const options = [
-        document.getElementById("pollOption1").value.trim(),
-        document.getElementById("pollOption2").value.trim(),
-        document.getElementById("pollOption3").value.trim(),
-        document.getElementById("pollOption4").value.trim()
-      ].filter(Boolean);
-      if (!question || options.length < 2) return alert("Poll requires a question and at least 2 options.");
-      await sendChatPayload({ type: "poll", text: question, question, options, votes: {} });
-      closeModal("pollModal");
-    };
-
-    window.votePoll = async (chatId, messageId, idx) => {
-      await update(ref(database, `messages/${chatId}/${messageId}/votes`), { [currentUser.uid]: idx });
-    };
-
-    window.sendContactMessage = async () => {
-      const name = document.getElementById("contactName").value.trim();
-      const phone = document.getElementById("contactPhone").value.trim();
-      const email = document.getElementById("contactEmail").value.trim();
-      if (!name || !phone) return alert("Enter contact name and phone number.");
-      await sendChatPayload({ type: "contact", text: name, name, phone, email });
-      closeModal("contactModal");
-    };
-
-    // WebRTC Video / Audio Calls
+    // WebRTC Calls
     window.prepareCall = (uid, username, fullName, type) => {
       selectedCallUser = { uid, username, fullName };
       startCall(type);
